@@ -1,0 +1,43 @@
+name: Deploy to Firebase (Hosting + Functions)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Write service account to file
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $RUNNER_TEMP/firebase-sa.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-sa.json" >> $GITHUB_ENV
+
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools
+
+      - name: Install functions deps
+        working-directory: functions
+        run: npm ci
+
+      - name: Set SendGrid config
+        env:
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          firebase functions:config:set sendgrid.key="$SENDGRID_API_KEY" --project "$FIREBASE_PROJECT_ID"
+
+      - name: Deploy hosting & functions
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          firebase deploy --only hosting,functions --project "$FIREBASE_PROJECT_ID"
