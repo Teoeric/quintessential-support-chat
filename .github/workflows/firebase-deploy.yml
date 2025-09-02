@@ -37,7 +37,8 @@ jobs:
           firebase functions:config:set sendgrid.key="$SENDGRID_API_KEY" --project "$FIREBASE_PROJECT_ID"
 
       - name: Deploy hosting & functions
-        env:
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-        run: |
-          firebase deploy --only hosting,functions --project "$FIREBASE_PROJECT_ID"
+  env:
+    FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+    SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+  run: |
+    firebase deploy --only hosting,functions --project "$FIREBASE_PROJECT_ID"
