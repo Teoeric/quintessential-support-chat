@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Quintessential Promotions - Live Support</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f9; color: #333; margin: 0; }
+    #chat { width: 100%; max-width: 600px; margin: 40px auto; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 20px; }
+    h2 { color: #007bff; }
+    #messages { height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background: #fafafa; }
+    .msg { margin: 5px 0; padding: 5px; }
+    .msg.user { text-align: right; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; }
+    button { background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <h2>Live Support Chat</h2>
+    <div id="messages"></div>
+    <input id="name" placeholder="Your name" />
+    <input id="email" placeholder="Your email (optional)" />
+    <input id="message" placeholder="Type your message" />
+    <input type="file" id="fileInput" />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+
+  <script>
+    // TODO: Replace with your real Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
+
+    const messagesRef = db.ref("messages");
+
+    function renderMessage(data, isUser) {
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "msg " + (isUser ? "user" : "agent");
+      msgDiv.innerHTML = `<strong>${data.name || "User"}:</strong> ${data.text || ""}`;
+      if (data.fileUrl) {
+        msgDiv.innerHTML += `<br><a href="${data.fileUrl}" target="_blank">📎 Attachment</a>`;
+      }
+      document.getElementById("messages").appendChild(msgDiv);
+    }
+
+    messagesRef.on("child_added", (snapshot) => {
+      renderMessage(snapshot.val(), false);
+    });
+
+    function sendMessage() {
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const text = document.getElementById("message").value;
+      const file = document.getElementById("fileInput").files[0];
+
+      if (!text && !file) return;
+
+      if (file) {
+        const fileRef = storage.ref("uploads/" + Date.now() + "-" + file.name);
+        fileRef.put(file).then(() => {
+          fileRef.getDownloadURL().then((url) => {
+            messagesRef.push({ name, email, text, fileUrl: url, timestamp: Date.now() });
+          });
+        });
+      } else {
+        messagesRef.push({ name, email, text, timestamp: Date.now() });
+      }
+
+      document.getElementById("message").value = "";
+      document.getElementById("fileInput").value = "";
+    }
+  </script>
+</body>
+</html>
