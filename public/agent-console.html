@@ -1,1 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Quintessential Promotions - Agent Console</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f9; color: #333; margin: 0; }
+    #console { width: 100%; max-width: 800px; margin: 40px auto; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 20px; }
+    h2 { color: #007bff; }
+    #messages { height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background: #fafafa; }
+    .msg { margin: 5px 0; padding: 5px; }
+    .msg.user { text-align: left; }
+    .msg.agent { text-align: right; color: #007bff; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; }
+    button { background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <div id="console">
+    <h2>Agent Console</h2>
+    <div id="messages"></div>
+    <input id="reply" placeholder="Type your reply" />
+    <button onclick="sendReply()">Send Reply</button>
+  </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+  <script>
+    // TODO: Replace with your real Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const messagesRef = db.ref("messages");
+
+    function renderMessage(data, key) {
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "msg user";
+      msgDiv.innerHTML = `<strong>${data.name || "User"}:</strong> ${data.text || ""}`;
+      if (data.fileUrl) {
+        msgDiv.innerHTML += `<br><a href="${data.fileUrl}" target="_blank">📎 Attachment</a>`;
+      }
+      document.getElementById("messages").appendChild(msgDiv);
+    }
+
+    messagesRef.on("child_added", (snapshot) => {
+      renderMessage(snapshot.val(), snapshot.key);
+    });
+
+    function sendReply() {
+      const text = document.getElementById("reply").value;
+      if (!text) return;
+      messagesRef.push({ name: "Agent", text, timestamp: Date.now() });
+      document.getElementById("reply").value = "";
+    }
+  </script>
+</body>
+</html>
