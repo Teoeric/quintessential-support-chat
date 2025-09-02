@@ -30,11 +30,12 @@ jobs:
         run: npm install
 
       - name: Set SendGrid config
-        env:
-          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-        run: |
-          firebase functions:config:set sendgrid.key="$SENDGRID_API_KEY" --project "$FIREBASE_PROJECT_ID"
+if: env.SENDGRID_API_KEY != ''
+  env:
+    SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+    FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+  run: |
+    firebase functions:config:set sendgrid.key="$SENDGRID_API_KEY" --project "$FIREBASE_PROJECT_ID"
 
       - name: Deploy hosting & functions
         env:
